@@ -67,9 +67,9 @@ local function create_windows()
 	results_win_id = api.nvim_open_win(results_buf_id, false, results_win_opts)
 
 	for _, buf_id in ipairs({ input_buf_id, results_buf_id }) do
-		api.nvim_buf_set_option(buf_id, "modifiable", true)
-		api.nvim_buf_set_option(buf_id, "buftype", "nofile")
-		api.nvim_buf_set_option(buf_id, "bufhidden", "wipe")
+		api.nvim_set_option_value("modifiable", true, { buf = buf_id })
+		api.nvim_set_option_value("buftype", "nofile", { buf = buf_id })
+		api.nvim_set_option_value("bufhidden", "delete", { buf = buf_id })
 	end
 
 	local input_keymap_opts = { noremap = true, silent = true, buffer = input_buf_id }
