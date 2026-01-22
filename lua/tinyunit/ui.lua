@@ -70,7 +70,6 @@ local function create_windows()
 		api.nvim_set_option_value("modifiable", true, { buf = buf_id })
 		api.nvim_set_option_value("buftype", "nofile", { buf = buf_id })
 		api.nvim_set_option_value("bufhidden", "delete", { buf = buf_id })
-		api.nvim_buf_set_name(buf_id, "tinyunit")
 		api.nvim_set_option_value("filetype", "tinyunit", { buf = buf_id })
 	end
 
