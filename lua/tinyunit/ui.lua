@@ -7,6 +7,9 @@ local input_win_id = nil
 local input_buf_id = nil
 local results_win_id = nil
 local results_buf_id = nil
+local origin_win_id = nil
+local origin_buf_id = nil
+local origin_cursor = nil
 local original_selection = {
 	start_pos = nil,
 	end_pos = nil,
@@ -109,6 +112,9 @@ function M.close_windows()
 	if results_win_id and api.nvim_win_is_valid(results_win_id) then
 		api.nvim_win_close(results_win_id, true)
 	end
+	origin_win_id = nil
+	origin_buf_id = nil
+	origin_cursor = nil
 end
 
 function M.convert_value(input)
@@ -129,16 +135,38 @@ function M.select_and_replace()
 		vim.fn.setreg('"', selected_value)
 
 		local target_win = nil
-		for _, win in ipairs(vim.api.nvim_list_wins()) do
-			local buf = vim.api.nvim_win_get_buf(win)
-			if buf ~= input_buf_id and buf ~= results_buf_id then
-				target_win = win
-				break
+		if origin_win_id and api.nvim_win_is_valid(origin_win_id) then
+			local origin_buf = api.nvim_win_get_buf(origin_win_id)
+			if origin_buf ~= input_buf_id and origin_buf ~= results_buf_id then
+				target_win = origin_win_id
+			end
+		end
+
+		if not target_win and origin_buf_id then
+			for _, win in ipairs(vim.api.nvim_list_wins()) do
+				local buf = vim.api.nvim_win_get_buf(win)
+				if buf == origin_buf_id and buf ~= input_buf_id and buf ~= results_buf_id then
+					target_win = win
+					break
+				end
+			end
+		end
+
+		if not target_win then
+			for _, win in ipairs(vim.api.nvim_list_wins()) do
+				local buf = vim.api.nvim_win_get_buf(win)
+				if buf ~= input_buf_id and buf ~= results_buf_id then
+					target_win = win
+					break
+				end
 			end
 		end
 
 		if target_win then
 			vim.api.nvim_set_current_win(target_win)
+			if origin_cursor then
+				pcall(vim.api.nvim_win_set_cursor, target_win, origin_cursor)
+			end
 			-- Execute normal mode paste command
 			vim.cmd('normal! viw"_dP')
 		end
@@ -151,6 +179,10 @@ function M.open_converter(initial_value)
 	if input_win_id and api.nvim_win_is_valid(input_win_id) then
 		M.close_windows()
 	end
+
+	origin_win_id = api.nvim_get_current_win()
+	origin_buf_id = api.nvim_win_get_buf(origin_win_id)
+	origin_cursor = api.nvim_win_get_cursor(origin_win_id)
 
 	if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
 		vim.cmd('noau normal! "vy"')
